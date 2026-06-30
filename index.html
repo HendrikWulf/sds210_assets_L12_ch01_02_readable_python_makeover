@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Readable Python Makeover Explorer</title>
+<style>
+    :root {
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --border: #cbd5e1;
+        --text: #0f172a;
+        --muted: #64748b;
+        --accent: #2563eb;
+        --accent-soft: #dbeafe;
+        --good: #16a34a;
+        --good-soft: #dcfce7;
+        --warn: #f59e0b;
+        --warn-soft: #fef3c7;
+        --danger: #dc2626;
+        --danger-soft: #fee2e2;
+        --code-bg: #0f172a;
+        --code-text: #e2e8f0;
+    }
+
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .app {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: 1.8rem;
+    }
+
+    .subtitle {
+        color: var(--muted);
+        margin-bottom: 18px;
+        line-height: 1.5;
+    }
+
+    .controls {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    .controls h2 {
+        margin: 0 0 8px;
+        font-size: 1.1rem;
+    }
+
+    .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    button {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 9px 13px;
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: 0.2s;
+    }
+
+    button.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    .panel h2 {
+        margin: 0 0 6px;
+        font-size: 1.25rem;
+    }
+
+    .panel-note {
+        color: var(--muted);
+        margin-bottom: 12px;
+        line-height: 1.4;
+    }
+
+    pre {
+        margin: 0;
+        background: var(--code-bg);
+        color: var(--code-text);
+        border-radius: 12px;
+        padding: 14px;
+        overflow-x: auto;
+        min-height: 330px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.86rem;
+        line-height: 1.45;
+        white-space: pre;
+    }
+
+
+
+    pre code {
+        display: block;
+        color: var(--code-text);
+    }
+
+    .py-keyword {
+        color: #c084fc;
+        font-weight: 700;
+    }
+
+    .py-builtin {
+        color: #f472b6;
+        font-weight: 650;
+    }
+
+    .py-function {
+        color: #60a5fa;
+    }
+
+    .py-string {
+        color: #fbbf24;
+    }
+
+    .py-number {
+        color: #fca5a5;
+    }
+
+    .py-comment {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    .py-docstring {
+        color: #86efac;
+        font-style: italic;
+    }
+
+    .code-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .legend-token {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #f8fafc;
+        padding: 5px 9px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+    }
+
+    .legend-token::before {
+        content: "";
+        display: inline-block;
+        width: 0.65rem;
+        height: 0.65rem;
+        border-radius: 999px;
+        background: currentColor;
+    }
+
+    .metrics {
+        margin-top: 18px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    .meter-row {
+        display: grid;
+        grid-template-columns: 150px 1fr 60px;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .meter-label {
+        font-weight: 700;
+    }
+
+    .meter {
+        height: 14px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .meter-fill {
+        height: 100%;
+        width: 100%;
+        background: var(--danger);
+        transition: width 0.25s ease, background 0.25s ease;
+    }
+
+    .score {
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .explanation {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 12px;
+        line-height: 1.5;
+        color: #1e3a8a;
+    }
+
+    .pill {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-left: 6px;
+    }
+
+    .bad {
+        background: var(--danger-soft);
+        color: #991b1b;
+    }
+
+    .good {
+        background: var(--good-soft);
+        color: #166534;
+    }
+</style>
+</head>
+<body>
+<div class="app">
+    <h1>Readable Python Makeover</h1>
+    <p class="subtitle">
+        Toggle one readability practice at a time. Watch the same geospatial workflow become easier
+        to scan, explain, debug, and trust.
+    </p>
+
+    <section class="controls">
+        <h2>Apply readability improvements</h2>
+        <p class="subtitle">
+            Each choice reduces ambiguity. The goal is not shorter code; the goal is code that communicates.
+        </p>
+        <div class="buttons">
+            <button data-step="names">Improve names</button>
+            <button data-step="whitespace">Add whitespace</button>
+            <button data-step="lines">Break long lines</button>
+            <button data-step="comments">Add why-comments</button>
+            <button data-step="docstring">Add docstring</button>
+        </div>
+        <div class="code-legend" aria-label="Python syntax color legend">
+            <span class="legend-token py-keyword">keyword</span>
+            <span class="legend-token py-function">function</span>
+            <span class="legend-token py-string">string</span>
+            <span class="legend-token py-number">number</span>
+            <span class="legend-token py-comment">comment</span>
+            <span class="legend-token py-docstring">docstring</span>
+        </div>
+    </section>
+
+    <section class="grid">
+        <article class="panel">
+            <h2>Before <span class="pill bad">high ambiguity</span></h2>
+            <p class="panel-note">The workflow works, but the meaning is hidden in short names and compressed logic.</p>
+            <pre><code id="before-code" class="language-python"></code></pre>
+        </article>
+
+        <article class="panel">
+            <h2>After <span class="pill good">clearer intent</span></h2>
+            <p class="panel-note">The same workflow becomes easier to read as structure and intent are made explicit.</p>
+            <pre><code id="after-code" class="language-python"></code></pre>
+        </article>
+    </section>
+
+    <section class="metrics">
+        <div class="meter-row">
+            <div class="meter-label">Cognitive load</div>
+            <div class="meter"><div id="load-meter" class="meter-fill"></div></div>
+            <div id="load-score" class="score">100%</div>
+        </div>
+        <div id="explanation" class="explanation">
+            Start by improving variable names. A vague name forces the reader to keep extra context in memory.
+        </div>
+    </section>
+</div>
+
+<script>
+    const beforeCode = `import geopandas as gpd
+fp="data/stations.gpkg"
+d=gpd.read_file(fp).to_crs("EPSG:2056")
+d["d"]=d.geometry.distance(d.geometry.iloc[0])
+d=d[d["d"]<50000]
+print(d[["station_id","d"]])`;
+
+    const states = {
+        none: `import geopandas as gpd
+fp="data/stations.gpkg"
+d=gpd.read_file(fp).to_crs("EPSG:2056")
+d["d"]=d.geometry.distance(d.geometry.iloc[0])
+d=d[d["d"]<50000]
+print(d[["station_id","d"]])`,
+
+        names: `import geopandas as gpd
+station_path="data/stations.gpkg"
+stations_gdf=gpd.read_file(station_path).to_crs("EPSG:2056")
+stations_gdf["distance_m"]=stations_gdf.geometry.distance(stations_gdf.geometry.iloc[0])
+nearby_stations_gdf=stations_gdf[stations_gdf["distance_m"]<50000]
+print(nearby_stations_gdf[["station_id","distance_m"]])`,
+
+        whitespace: `import geopandas as gpd
+
+station_path = "data/stations.gpkg"
+stations_gdf = gpd.read_file(station_path).to_crs("EPSG:2056")
+
+stations_gdf["distance_m"] = stations_gdf.geometry.distance(stations_gdf.geometry.iloc[0])
+nearby_stations_gdf = stations_gdf[stations_gdf["distance_m"] < 50000]
+
+print(nearby_stations_gdf[["station_id", "distance_m"]])`,
+
+        lines: `import geopandas as gpd
+
+station_path = "data/stations.gpkg"
+stations_gdf = gpd.read_file(station_path)
+stations_gdf = stations_gdf.to_crs("EPSG:2056")
+
+reference_geom = stations_gdf.geometry.iloc[0]
+stations_gdf["distance_m"] = stations_gdf.geometry.distance(reference_geom)
+
+nearby_stations_gdf = stations_gdf[
+    stations_gdf["distance_m"] < 50000
+]
+
+print(nearby_stations_gdf[["station_id", "distance_m"]])`,
+
+        comments: `import geopandas as gpd
+
+station_path = "data/stations.gpkg"
+
+# Project to LV95 so distance calculations are returned in meters.
+stations_gdf = gpd.read_file(station_path)
+stations_gdf = stations_gdf.to_crs("EPSG:2056")
+
+# Use the first station as the reference location for the distance filter.
+reference_geom = stations_gdf.geometry.iloc[0]
+stations_gdf["distance_m"] = stations_gdf.geometry.distance(reference_geom)
+
+# Keep only stations within a 50 km radius of the reference station.
+nearby_stations_gdf = stations_gdf[
+    stations_gdf["distance_m"] < 50000
+]
+
+print(nearby_stations_gdf[["station_id", "distance_m"]])`,
+
+        docstring: `import geopandas as gpd
+
+
+def select_nearby_stations(station_path, target_crs="EPSG:2056", max_distance_m=50000):
+    """
+    Select stations within a maximum distance of the first station.
+
+    Parameters
+    ----------
+    station_path : str
+        Path to the input station dataset.
+    target_crs : str
+        Projected CRS used for distance calculations.
+    max_distance_m : float
+        Maximum distance from the reference station in meters.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+        Stations located within the specified distance threshold.
+    """
+    # Project to LV95 so distance calculations are returned in meters.
+    stations_gdf = gpd.read_file(station_path)
+    stations_gdf = stations_gdf.to_crs(target_crs)
+
+    # Use the first station as the reference location for the distance filter.
+    reference_geom = stations_gdf.geometry.iloc[0]
+    stations_gdf["distance_m"] = stations_gdf.geometry.distance(reference_geom)
+
+    # Keep only stations within the selected radius.
+    nearby_stations_gdf = stations_gdf[
+        stations_gdf["distance_m"] < max_distance_m
+    ]
+
+    return nearby_stations_gdf
+
+
+nearby_stations_gdf = select_nearby_stations("data/stations.gpkg")
+print(nearby_stations_gdf[["station_id", "distance_m"]])`
+    };
+
+    const explanations = {
+        none: "Start by improving variable names. A vague name forces the reader to keep extra context in memory.",
+        names: "Clear names reveal the role of each object: path, GeoDataFrame, distance in meters, and filtered output.",
+        whitespace: "Whitespace separates conceptual steps: input, transformation, analysis, filtering, and output.",
+        lines: "Breaking long lines and extracting intermediate variables makes debugging easier because each step has a visible result.",
+        comments: "Good comments explain why a spatial decision was made, such as projecting data before calculating distances.",
+        docstring: "A docstring turns reusable code into a small documented tool. It explains inputs, assumptions, and outputs."
+    };
+
+
+
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function highlightCodeSegment(segment) {
+        const escaped = escapeHtml(segment);
+        const tokenPattern = /\b(import|from|as|def|return|class|if|for|in|while|and|or|not|True|False|None|pass)\b|\b(print|len|range|str|int|float|dict|list)\b|\b([A-Za-z_]\w*)(?=\()|\b(\d[\d_]*(?:\.\d+)?)\b/g;
+
+        return escaped.replace(tokenPattern, (match, keyword, builtin, functionName, number) => {
+            if (keyword) return `<span class="py-keyword">${match}</span>`;
+            if (builtin) return `<span class="py-builtin">${match}</span>`;
+            if (functionName) return `<span class="py-function">${match}</span>`;
+            if (number) return `<span class="py-number">${match}</span>`;
+            return match;
+        });
+    }
+
+    function highlightPlainLine(line) {
+        let output = "";
+        let index = 0;
+
+        while (index < line.length) {
+            const char = line[index];
+
+            if (char === "#") {
+                output += `<span class="py-comment">${escapeHtml(line.slice(index))}</span>`;
+                break;
+            }
+
+            if (char === "'" || char === '"') {
+                const quote = char;
+                let end = index + 1;
+
+                while (end < line.length) {
+                    if (line[end] === "\\") {
+                        end += 2;
+                        continue;
+                    }
+                    if (line[end] === quote) {
+                        end += 1;
+                        break;
+                    }
+                    end += 1;
+                }
+
+                output += `<span class="py-string">${escapeHtml(line.slice(index, end))}</span>`;
+                index = end;
+                continue;
+            }
+
+            let next = index + 1;
+            while (next < line.length && line[next] !== "#" && line[next] !== "'" && line[next] !== '"') {
+                next += 1;
+            }
+
+            output += highlightCodeSegment(line.slice(index, next));
+            index = next;
+        }
+
+        return output;
+    }
+
+    function highlightPython(code) {
+        const lines = code.split("\n");
+        const highlighted = [];
+        let inDocstring = false;
+        let docQuote = null;
+
+        for (const line of lines) {
+            if (inDocstring) {
+                const end = line.indexOf(docQuote);
+                if (end >= 0) {
+                    highlighted.push(
+                        `<span class="py-docstring">${escapeHtml(line.slice(0, end + 3))}</span>` +
+                        highlightPlainLine(line.slice(end + 3))
+                    );
+                    inDocstring = false;
+                    docQuote = null;
+                } else {
+                    highlighted.push(`<span class="py-docstring">${escapeHtml(line)}</span>`);
+                }
+                continue;
+            }
+
+            const tripleDouble = line.indexOf('"""');
+            const tripleSingle = line.indexOf("'" + "''");
+            let start = -1;
+            let quote = null;
+
+            if (tripleDouble >= 0 && (tripleSingle === -1 || tripleDouble < tripleSingle)) {
+                start = tripleDouble;
+                quote = '"""';
+            } else if (tripleSingle >= 0) {
+                start = tripleSingle;
+                quote = "'" + "''";
+            }
+
+            if (start >= 0) {
+                const end = line.indexOf(quote, start + 3);
+                if (end >= 0) {
+                    highlighted.push(
+                        highlightPlainLine(line.slice(0, start)) +
+                        `<span class="py-docstring">${escapeHtml(line.slice(start, end + 3))}</span>` +
+                        highlightPlainLine(line.slice(end + 3))
+                    );
+                } else {
+                    highlighted.push(
+                        highlightPlainLine(line.slice(0, start)) +
+                        `<span class="py-docstring">${escapeHtml(line.slice(start))}</span>`
+                    );
+                    inDocstring = true;
+                    docQuote = quote;
+                }
+            } else {
+                highlighted.push(highlightPlainLine(line));
+            }
+        }
+
+        return highlighted.join("\n");
+    }
+
+    function renderCode(element, code) {
+        element.innerHTML = highlightPython(code);
+    }
+
+    const order = ["names", "whitespace", "lines", "comments", "docstring"];
+    const buttons = document.querySelectorAll("button");
+    const before = document.getElementById("before-code");
+    const after = document.getElementById("after-code");
+    const meter = document.getElementById("load-meter");
+    const score = document.getElementById("load-score");
+    const explanation = document.getElementById("explanation");
+
+    renderCode(before, beforeCode);
+    renderCode(after, states.none);
+
+    function render() {
+        const active = order.filter(step => document.querySelector(`[data-step="${step}"]`).classList.contains("active"));
+        const last = active.length === 0 ? "none" : active[active.length - 1];
+
+        renderCode(after, states[last]);
+
+        const load = Math.max(15, 100 - active.length * 17);
+        meter.style.width = `${load}%`;
+        meter.style.background = load > 65 ? "var(--danger)" : load > 35 ? "var(--warn)" : "var(--good)";
+        score.textContent = `${load}%`;
+
+        explanation.textContent = explanations[last];
+    }
+
+    buttons.forEach(button => {
+        button.addEventListener("click", () => {
+            const step = button.dataset.step;
+            const index = order.indexOf(step);
+
+            for (let i = 0; i <= index; i++) {
+                document.querySelector(`[data-step="${order[i]}"]`).classList.add("active");
+            }
+
+            for (let i = index + 1; i < order.length; i++) {
+                document.querySelector(`[data-step="${order[i]}"]`).classList.remove("active");
+            }
+
+            render();
+        });
+    });
+</script>
+</body>
+</html>
